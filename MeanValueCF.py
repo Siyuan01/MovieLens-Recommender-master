@@ -34,6 +34,7 @@ class MeanValueCF:
         self.filledset=None
         self.save_model = save_model
         self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
+        self.records=[]#存放用户评分数据，令records[i] = [u,i,rui,pui]，其中rui是用户u对物品i的实际评分，pui是算法预测出来的用户u对物品i的评分
         self.user_sim_mat=None
     def fillMissingValue(self,trainset):
         '''
@@ -104,6 +105,7 @@ class MeanValueCF:
                     continue
                 # predict the user's "interest" for each movie
                 predict_score[movie] = rating
+                self.records.append([user,movie,rating])#除了看过的之外的电影预测评分
         # print('Recommend movies to user success.')
         # return the N best score movies
         # print([score for  _, score in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]])
@@ -119,6 +121,7 @@ class MeanValueCF:
             raise ValueError('MVCF has not init or fit method has not called yet.')
         self.testset = testset
         print('Test recommendation system start...')
+        # print(testset)
         N = self.n_rec_movie
         #  varables for precision and recall
         hit = 0
@@ -131,6 +134,20 @@ class MeanValueCF:
 
         # record the calculate time has spent.
         test_time = LogTime(print_step=1000)
+
+        RMSE = 0
+        MAE = 0
+        sum_R=0
+        sum_M=0
+        for user,movie,pui in self.records:
+            #records：self.records.append([user,movie,rating])#除了看过的之外的电影预测评分
+            rui=self.testset[user][movie]
+            sum_R+=((rui-pui)*(rui-pui))
+            sum_M+=math.fabs(rui-pui)
+            test_time.count_time()
+        RMSE=sum_R/float(len(self.records))
+        MAE=sum_M/float(len(self.records))
+
         for i, user in enumerate(self.trainset):
             test_movies = self.testset.get(user, {})
             rec_movies = self.recommend(user)  # type:list
@@ -154,6 +171,8 @@ class MeanValueCF:
 
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f\tpopularity=%.4f\n' %
               (precision, recall, coverage, popularity))
+
+        print('RMSE=%.4f\tMAE=%.4f\n' %(RMSE, MAE))
 
     def predict(self, testset):
         """
