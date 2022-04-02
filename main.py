@@ -49,7 +49,12 @@ def run_model(model_name, dataset_name, test_size=0.3, clean=False):
     else:
         raise ValueError('No model named ' + model_name)
     model.fit(trainset)
-    recommend_test(model, [1, 100, 233, 666, 888])
+
+    # adjust the number of test user
+    # user_list=[1, 100, 233, 666, 888]
+    user_list=list(range(1,943+1))  if dataset_name == 'ml-100k' else list(range(1,6040+1))
+
+    recommend_test(model, user_list)
     model.test(testset)
     print(model.user_sim_mat)
 

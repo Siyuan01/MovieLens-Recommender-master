@@ -33,7 +33,7 @@ class MeanValueCF:
         self.trainset = None
         self.filledset=None
         self.save_model = save_model
-        self.usernum,self.itemnum=943,1682 if dataset_name == 'ml-100k' else 6040,3952
+        self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
         self.user_sim_mat=None
     def fillMissingValue(self,trainset):
         '''
@@ -43,15 +43,18 @@ class MeanValueCF:
         '''
         filledset = defaultdict(dict)
         for user,movies in trainset.items():
-            for movie,rating in movies:
+            for movie,rating in movies.items():
                 filledset[user][movie]=trainset[user][movie]
+        # print(filledset)
+        # print((list(trainset.keys())))
         user_mean={}
         for user,movies in trainset.items():
             user_mean[user]=sum(trainset[user].values())/(1.0*len(trainset[user]))
+            # print(user,sum(trainset[user].values()),len(trainset[user]))
+        # print(user_mean)
         for u in range(1,self.usernum+1):
             for i in range(1,self.itemnum+1):
-                filledset[u][i]=user_mean[u]
-        wwww
+                filledset[str(u)][str(i)]=user_mean[str(u)]
         return filledset
 
 

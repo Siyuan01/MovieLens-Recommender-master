@@ -136,4 +136,6 @@ class DataSet:
         print('split rating data to training set and test set success.')
         print('train set size = %s' % trainset_len)
         print('test set size = %s\n' % testset_len)
+        # print(len(train['1']))
+        # print(len(test['1']))
         return train, test
