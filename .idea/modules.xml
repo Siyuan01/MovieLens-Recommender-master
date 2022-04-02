@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/MovieLens-Recommender-master.iml" filepath="$PROJECT_DIR$/.idea/MovieLens-Recommender-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../rsTest/.idea/rsTest.iml" filepath="$PROJECT_DIR$/../rsTest/.idea/rsTest.iml" />
+    </modules>
+  </component>
+</project>
