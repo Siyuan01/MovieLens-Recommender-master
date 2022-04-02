@@ -1,7 +1,7 @@
 # -*- coding = utf-8 -*-
 """
-MeanValue Collaborative filtering.
-fill the array with user's mean rating.
+ModeValue Collaborative filtering.
+fill the array with user's mode rating.
 """
 import collections
 from operator import itemgetter
@@ -15,9 +15,9 @@ import utils
 from utils import LogTime
 
 
-class MeanValueCF:
+class ModeValueCF:
     """
-    MeanValue Collaborative filtering.
+    ModeValue Collaborative filtering.
     Top-N recommendation.
     """
 
@@ -35,23 +35,36 @@ class MeanValueCF:
         self.user_sim_mat=None
     def fillMissingValue(self,trainset):
         '''
-        Fill the trainset with mean value.
+        Fill the trainset with Mode value.
         :param trainset: train dataset(dict)
         :return: filledset(dict)
         '''
+        print("FillMissingValue start...\n")
         filledset = defaultdict(dict)
         for user,movies in trainset.items():
             for movie,rating in movies.items():
                 filledset[user][movie]=trainset[user][movie]
-        user_mean={}
+
+        # find the mode value for each user
+        user_mode={}
         for user,movies in trainset.items():
-            user_mean[user]=sum(trainset[user].values())/(1.0*len(trainset[user]))
-        # print(user_mean)
+            score_mode=defaultdict(int)
+            for movie,rating in movies.items():
+                score_mode[rating]+=1
+            user_mode[user]=0
+            max_count=0
+            for score,count in score_mode.items():
+                if count>max_count:
+                    user_mode[user]=score
+                    max_count=count
+
+        print(user_mode)
         for u in range(1,self.usernum+1):
             for i in range(1,self.itemnum+1):
                 if str(i) not in filledset[str(u)]:
-                    filledset[str(u)][str(i)]=user_mean[str(u)]
+                    filledset[str(u)][str(i)]=user_mode[str(u)]
         print(filledset['1'])
+        print("FillMissingValue success.\n")
         return filledset
 
 

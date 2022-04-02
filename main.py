@@ -12,6 +12,8 @@ from most_popular import MostPopular
 from random_pred import RandomPredict
 from utils import LogTime
 from MeanValueCF import MeanValueCF
+from ModeValueCF import  ModeValueCF
+
 
 def run_model(model_name, dataset_name, test_size=0.3, clean=False):
     print('*' * 70)
@@ -35,6 +37,8 @@ def run_model(model_name, dataset_name, test_size=0.3, clean=False):
         model = ItemBasedCF()
     elif model_name == 'MeanValueCF':
         model = MeanValueCF(dataset_name=dataset_name)
+    elif model_name == 'ModeValueCF':
+        model = ModeValueCF(dataset_name=dataset_name)
     elif model_name == 'Random':
         model = RandomPredict()
     elif model_name == 'MostPopular':
@@ -56,7 +60,7 @@ def run_model(model_name, dataset_name, test_size=0.3, clean=False):
 
     recommend_test(model, user_list)
     model.test(testset)
-    print(model.user_sim_mat)
+    # print(model.user_sim_mat)
 
 def recommend_test(model, user_list):
     for user in user_list:
@@ -70,14 +74,15 @@ if __name__ == '__main__':
     main_time = LogTime(words="Main Function")
     dataset_name = 'ml-100k'
     # dataset_name = 'ml-1m'
-    model_type = 'UserCF'
+    # model_type = 'UserCF'
     # model_type = 'UserCF-IIF'
     # model_type = 'ItemCF'
     # model_type = 'Random'
     # model_type = 'MostPopular'
     # model_type = 'ItemCF-IUF'
     # model_type = 'LFM'
-    model_type= 'MeanValueCF'
-    test_size = 0.1
+    # model_type= 'MeanValueCF'
+    model_type = 'ModeValueCF'
+    test_size = 0.2
     run_model(model_type, dataset_name, test_size, False)
     main_time.finish()
