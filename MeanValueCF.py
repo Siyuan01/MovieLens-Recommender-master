@@ -51,6 +51,7 @@ class MeanValueCF:
         for u in range(1,self.usernum+1):
             for i in range(1,self.itemnum+1):
                 filledset[u][i]=user_mean[u]
+        wwww
         return filledset
 
 
