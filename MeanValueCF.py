@@ -1,8 +1,7 @@
 # -*- coding = utf-8 -*-
 """
-User-based Collaborative filtering.
-
-
+MeanValue Collaborative filtering.
+fill the array with user's mean rating.
 """
 import collections
 from operator import itemgetter
@@ -22,19 +21,17 @@ class MeanValueCF:
     Top-N recommendation.
     """
 
-    def __init__(self, k_sim_user=20, n_rec_movie=10, dataset_name='ml-100k',save_model=True):
+    def __init__(self,  n_rec_movie=10, dataset_name='ml-100k',save_model=True):
         """
-        Init UserBasedCF with n_sim_user and n_rec_movie.
+        Init with n_rec_movie.
         :return: None
         """
         print("MeanValueCF start...\n")
-        self.k_sim_user = k_sim_user
         self.n_rec_movie = n_rec_movie
         self.trainset = None
         self.filledset=None
         self.save_model = save_model
         self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
-        self.records=[]#存放用户评分数据，令records[i] = [u,i,rui,pui]，其中rui是用户u对物品i的实际评分，pui是算法预测出来的用户u对物品i的评分
         self.user_sim_mat=None
     def fillMissingValue(self,trainset):
         '''
@@ -46,12 +43,9 @@ class MeanValueCF:
         for user,movies in trainset.items():
             for movie,rating in movies.items():
                 filledset[user][movie]=trainset[user][movie]
-        # print(filledset)
-        # print((list(trainset.keys())))
         user_mean={}
         for user,movies in trainset.items():
             user_mean[user]=sum(trainset[user].values())/(1.0*len(trainset[user]))
-            # print(user,sum(trainset[user].values()),len(trainset[user]))
         # print(user_mean)
         for u in range(1,self.usernum+1):
             for i in range(1,self.itemnum+1):
@@ -105,7 +99,6 @@ class MeanValueCF:
                     continue
                 # predict the user's "interest" for each movie
                 predict_score[movie] = rating
-                self.records.append([user,movie,rating])#除了看过的之外的电影预测评分
         # print('Recommend movies to user success.')
         # return the N best score movies
         # print([score for  _, score in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]])
@@ -135,18 +128,18 @@ class MeanValueCF:
         # record the calculate time has spent.
         test_time = LogTime(print_step=1000)
 
-        RMSE = 0
-        MAE = 0
         sum_R=0
         sum_M=0
-        for user,movie,pui in self.records:
-            #records：self.records.append([user,movie,rating])#除了看过的之外的电影预测评分
-            rui=self.testset[user][movie]
-            sum_R+=((rui-pui)*(rui-pui))
-            sum_M+=math.fabs(rui-pui)
-            test_time.count_time()
-        RMSE=sum_R/float(len(self.records))
-        MAE=sum_M/float(len(self.records))
+        testsize=0
+        for user, movies in self.testset.items():
+            for movie, rating in movies.items():
+                pui=self.filledset[user][movie]
+                sum_R+=((rating-pui)*(rating-pui))
+                sum_M+=math.fabs(rating-pui)
+                testsize+=1
+                test_time.count_time()
+        RMSE=sum_R/float(testsize)
+        MAE=sum_M/float(testsize)
 
         for i, user in enumerate(self.trainset):
             test_movies = self.testset.get(user, {})
