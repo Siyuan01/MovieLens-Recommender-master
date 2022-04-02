@@ -39,10 +39,10 @@ At the end of a recommendation process, four numbers are given to measure the re
 ``Git`` is awesome~
 
 ```shell
-git clone https://github.com/fuxuemingzhu/MovieLens-Recommender.git
+git clone https://github.com/Siyuan01/MovieLens-Recommender-master.git
 ```
 
-`Movielens-1M` and `Movielens-100k` datasets are under the `data/` folder.
+`Movielens-1M` and `Movielens-100k` datasets should be downloaded from the homepage of movielens(are under the `data/` folder.)
 
 **2. Run**
 
@@ -197,7 +197,7 @@ LFM has more parameters to tune, and I don't spend much time to do this. I belie
 
 Apache License.
 
-    Copyright 2018 fuxuemingzhu
+    Copyright 2022 Siyuan
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
