@@ -39,10 +39,10 @@ At the end of a recommendation process, four numbers are given to measure the re
 ``Git`` is awesome~
 
 ```shell
-git clone https://github.com/fuxuemingzhu/MovieLens-Recommender.git
+git clone https://github.com/Siyuan01/MovieLens-Recommender-master.git
 ```
 
-`Movielens-1M` and `Movielens-100k` datasets are under the `data/` folder.
+`Movielens-1M` and `Movielens-100k` datasets should be downloaded from the homepage of movielens(are under the `data/` folder.)
 
 **2. Run**
 
