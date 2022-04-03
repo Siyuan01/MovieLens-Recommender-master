@@ -34,24 +34,32 @@ class MeanValueCF:
         self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
         self.user_sim_mat=None
     def fillMissingValue(self,trainset):
-        '''
+        """
         Fill the trainset with mean value.
         :param trainset: train dataset(dict)
         :return: filledset(dict)
-        '''
+        """
         filledset = defaultdict(dict)
         for user,movies in trainset.items():
             for movie,rating in movies.items():
                 filledset[user][movie]=trainset[user][movie]
-        user_mean={}
+        movie_sum=defaultdict(int)
+        movie_count=defaultdict(int)
         for user,movies in trainset.items():
-            user_mean[user]=sum(trainset[user].values())/(1.0*len(trainset[user]))
-        # print(user_mean)
+            for movie,rating in movies.items():
+                movie_sum[movie]+=rating
+                movie_count[movie]+=1
+        #可以考虑只计算评分数量在某值以上的？
+        movie_mean = {}
+        for movie,m_sum in movie_sum.items():
+            movie_mean[movie]=m_sum/float(movie_count[movie])
+        # print(trainset)
+        print(sorted(movie_mean.items(),key=itemgetter(1),reverse=True))
         for u in range(1,self.usernum+1):
             for i in range(1,self.itemnum+1):
-                if str(i) not in filledset[str(u)]:
-                    filledset[str(u)][str(i)]=user_mean[str(u)]
-        print(filledset['1'])
+                if str(i) not in filledset[str(u)] and str(i) in movie_mean:
+                    filledset[str(u)][str(i)]=movie_mean[str(i)]
+        # print(filledset['1'])
         return filledset
 
 
@@ -135,11 +143,12 @@ class MeanValueCF:
         testsize=0
         for user, movies in self.testset.items():
             for movie, rating in movies.items():
-                pui=self.filledset[user][movie]
-                sum_R+=((rating-pui)*(rating-pui))
-                sum_M+=math.fabs(rating-pui)
-                testsize+=1
-                test_time.count_time()
+                if movie in self.filledset[user]:
+                    pui=self.filledset[user][movie]
+                    sum_R+=((rating-pui)*(rating-pui))
+                    sum_M+=math.fabs(rating-pui)
+                    testsize+=1
+                    test_time.count_time()
         RMSE=sum_R/float(testsize)
         MAE=sum_M/float(testsize)
 
