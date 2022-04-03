@@ -13,7 +13,7 @@ from random_pred import RandomPredict
 from utils import LogTime
 from MeanValueCF import MeanValueCF
 from ModeValueCF import  ModeValueCF
-
+from HfCF import HybridFillingCF
 
 def run_model(model_name, dataset_name, test_size=0.3, clean=False):
     print('*' * 70)
@@ -39,6 +39,8 @@ def run_model(model_name, dataset_name, test_size=0.3, clean=False):
         model = MeanValueCF(dataset_name=dataset_name)
     elif model_name == 'ModeValueCF':
         model = ModeValueCF(dataset_name=dataset_name)
+    elif model_name == 'HfCF':
+        model = HybridFillingCF(dataset_name=dataset_name)
     elif model_name == 'Random':
         model = RandomPredict()
     elif model_name == 'MostPopular':
@@ -82,7 +84,8 @@ if __name__ == '__main__':
     # model_type = 'ItemCF-IUF'
     # model_type = 'LFM'
     # model_type= 'MeanValueCF'
-    model_type = 'ModeValueCF'
+    # model_type = 'ModeValueCF'
+    model_type= 'HfCF'
     test_size = 0.2
     run_model(model_type, dataset_name, test_size, False)
     main_time.finish()
