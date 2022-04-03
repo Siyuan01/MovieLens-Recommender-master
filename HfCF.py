@@ -1,12 +1,9 @@
 # -*- coding = utf-8 -*-
 """
 Hybrid filling Collaborative filtering.
-fill the array with user's mean rating.
 """
 from operator import itemgetter
-
 import math
-
 from collections import defaultdict
 
 import similarity
@@ -25,7 +22,7 @@ class HybridFillingCF:
         Init with n_rec_movie.
         :return: None
         """
-        print("MeanValueCF start...\n")
+        print("HybridFillingCF start...\n")
         self.n_rec_movie = n_rec_movie
         self.trainset = None
         self.filledset=None
@@ -43,22 +40,23 @@ class HybridFillingCF:
         for user,movies in trainset.items():
             for movie,rating in movies.items():
                 filledset[user][movie]=trainset[user][movie]
-        movie_sum=defaultdict(int)
-        movie_count=defaultdict(int)
-        for user,movies in trainset.items():
-            for movie,rating in movies.items():
-                movie_sum[movie]+=rating
-                movie_count[movie]+=1
-        #可以考虑只计算评分数量在某值以上的？
-        movie_mean = {}
-        for movie,m_sum in movie_sum.items():
-            movie_mean[movie]=m_sum/float(movie_count[movie])
-        # print(trainset)
-        print(sorted(movie_mean.items(),key=itemgetter(1),reverse=True))
-        for u in range(1,self.usernum+1):
-            for i in range(1,self.itemnum+1):
-                if str(i) not in filledset[str(u)] and str(i) in movie_mean:
-                    filledset[str(u)][str(i)]=movie_mean[str(i)]
+
+        # movie_sum=defaultdict(int)
+        # movie_count=defaultdict(int)
+        # for user,movies in trainset.items():
+        #     for movie,rating in movies.items():
+        #         movie_sum[movie]+=rating
+        #         movie_count[movie]+=1
+        # #可以考虑只计算评分数量在某值以上的？
+        # movie_mean = {}
+        # for movie,m_sum in movie_sum.items():
+        #     movie_mean[movie]=m_sum/float(movie_count[movie])
+        # # print(trainset)
+        # print(sorted(movie_mean.items(),key=itemgetter(1),reverse=True))
+        # for u in range(1,self.usernum+1):
+        #     for i in range(1,self.itemnum+1):
+        #         if str(i) not in filledset[str(u)] and str(i) in movie_mean:
+        #             filledset[str(u)][str(i)]=movie_mean[str(i)]
         # print(filledset['1'])
         return filledset
 
@@ -96,7 +94,7 @@ class HybridFillingCF:
         """
         if not self.n_rec_movie or \
                 not self.trainset or not self.movie_popular or not self.movie_count:
-            raise NotImplementedError('UserCF has not init or fit method has not called yet.')
+            raise NotImplementedError('HfCF has not init or fit method has not called yet.')
         N = self.n_rec_movie
         if user not in self.trainset:
             print('The user (%s) not in trainset.' % user)
@@ -121,7 +119,7 @@ class HybridFillingCF:
         :return:
         """
         if not self.n_rec_movie or not self.trainset or not self.movie_popular or not self.movie_count:
-            raise ValueError('MVCF has not init or fit method has not called yet.')
+            raise ValueError('HfCF has not init or fit method has not called yet.')
         self.testset = testset
         print('Test recommendation system start...')
         # print(testset)
