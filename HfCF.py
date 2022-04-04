@@ -18,7 +18,7 @@ class HybridFillingCF:
     Top-N recommendation.
     """
 
-    def __init__(self,p_sim_item=20, k_sim_user=20, n_rec_movie=10, dataset_name='ml-100k',save_model=True):
+    def __init__(self,p_sim_item=20, q_user_item=20,k_sim_user=20, n_rec_movie=10, dataset_name='ml-100k',save_model=True):
         """
         Init with n_rec_movie.
         :return: None
@@ -29,7 +29,9 @@ class HybridFillingCF:
         self.filledset=None
         self.save_model = save_model
         self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
-        self.P=p_sim_item
+        self.P=p_sim_item#每个物品相似度最高的前 p 个邻近物品
+        self.K=k_sim_user#用户u的前k个邻近用户
+        self.Q=q_user_item#邻近用户共同评分数量最多的 q 个物品
         self.user_sim_mat=None
         self.movie_sim_mat=None
     def fillMissingValue(self,trainset):
@@ -50,7 +52,6 @@ class HybridFillingCF:
                     #extract the top P(similarity) item
                     movie_similarity=sorted(self.movie_sim_mat[str(i)].items(),key=operator.itemgetter(1),reverse=True)
                     len_sim_movie=len(movie_similarity)#The len of most similar items
-                    # The first p neighboring items of the item are not rated
                     if len_sim_movie == 0:
                         continue
                     if len_sim_movie>self.P:
@@ -59,9 +60,12 @@ class HybridFillingCF:
                     up=0
                     down=0
                     for sim_movie , sim in movie_similarity:
+                        if sim_movie not in movies:  #如果相似物品没有频分，就不参与计算
+                            continue
                         up+=(sim* movies[sim_movie])
                         down+=sim
-                    self.filledset[user][str(i)]= up/(float(down))# user's rating for item i
+                    if down!=0:  # do not fill if the first p neighboring items of the item are not rated
+                        self.filledset[user][str(i)]= up/(float(down))# user's rating for item i
         # print(filledset['1'])
 
         # fill by user
