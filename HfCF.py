@@ -2,6 +2,7 @@
 """
 Hybrid filling Collaborative filtering.
 """
+import operator
 from operator import itemgetter
 import math
 from collections import defaultdict
@@ -30,35 +31,41 @@ class HybridFillingCF:
         self.usernum,self.itemnum=(943,1682) if dataset_name == 'ml-100k' else (6040,3952)
         self.P=p_sim_item
         self.user_sim_mat=None
+        self.movie_sim_mat=None
     def fillMissingValue(self,trainset):
         """
         Fill the trainset with mean value.
         :param trainset: train dataset(dict)
         :return: filledset(dict)
         """
-        filledset = defaultdict(dict)
+        self.filledset = defaultdict(dict)
         for user,movies in trainset.items():
             for movie,rating in movies.items():
-                filledset[user][movie]=trainset[user][movie]
+                self.filledset[user][movie]=trainset[user][movie]
 
-        # movie_sum=defaultdict(int)
-        # movie_count=defaultdict(int)
-        # for user,movies in trainset.items():
-        #     for movie,rating in movies.items():
-        #         movie_sum[movie]+=rating
-        #         movie_count[movie]+=1
-        # #可以考虑只计算评分数量在某值以上的？
-        # movie_mean = {}
-        # for movie,m_sum in movie_sum.items():
-        #     movie_mean[movie]=m_sum/float(movie_count[movie])
-        # # print(trainset)
-        # print(sorted(movie_mean.items(),key=itemgetter(1),reverse=True))
-        # for u in range(1,self.usernum+1):
-        #     for i in range(1,self.itemnum+1):
-        #         if str(i) not in filledset[str(u)] and str(i) in movie_mean:
-        #             filledset[str(u)][str(i)]=movie_mean[str(i)]
+        # fill by item
+        for user,movies in trainset.items():
+            for i in range(1,self.itemnum+1):#Find items that have not been graded
+                if str(i) not in movies:
+                    #extract the top P(similarity) item
+                    movie_similarity=sorted(self.movie_sim_mat[str(i)].items(),key=operator.itemgetter(1),reverse=True)
+                    len_sim_movie=len(movie_similarity)#The len of most similar items
+                    # The first p neighboring items of the item are not rated
+                    if len_sim_movie == 0:
+                        continue
+                    if len_sim_movie>self.P:
+                        movie_similarity=movie_similarity[:self.P]
+                    # find the user's rating for the p items.
+                    up=0
+                    down=0
+                    for sim_movie , sim in movie_similarity:
+                        up+=(sim* movies[sim_movie])
+                        down+=sim
+                    self.filledset[user][str(i)]= up/(float(down))# user's rating for item i
         # print(filledset['1'])
-        return filledset
+
+        # fill by user
+
 
 
     def fit(self, trainset):
@@ -72,12 +79,12 @@ class HybridFillingCF:
             self.movie_popular = model_manager.load_model('movie_popular')
             self.movie_count = model_manager.load_model('movie_count')
             self.trainset = model_manager.load_model('trainset')
-            self.filledset = self.fillMissingValue(self.trainset)
+            self.fillMissingValue(self.trainset)
             print('User origin similarity model has saved before.\nLoad model success...\n')
         except OSError:
             print('No model saved before.\nTrain a new model...')
-            self.user_sim_mat, self.movie_popular, self.movie_count = \
-                similarity.calculate_user_similarity(trainset=trainset)
+            self.movie_sim_mat, self.movie_popular, self.movie_count = \
+                similarity.calculate_item_cosine_similarity(trainset=trainset)
             self.filledset=self.fillMissingValue(trainset)
             self.trainset = trainset
             print('Train a new model success.')
