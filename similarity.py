@@ -7,7 +7,6 @@ import collections
 
 import math
 
-import operator
 
 from collections import defaultdict
 

@@ -6,7 +6,7 @@ import operator
 from operator import itemgetter
 import math
 from collections import defaultdict
-
+from copy import  deepcopy
 import similarity
 import utils
 from utils import LogTime
@@ -32,6 +32,9 @@ class HybridFillingCF:
         self.P=p_sim_item#每个物品相似度最高的前 p 个邻近物品
         self.K=k_sim_user#用户u的前k个邻近用户
         self.Q=q_user_item#邻近用户共同评分数量最多的 q 个物品
+        if p_sim_item >self.itemnum or q_user_item>self.itemnum or k_sim_user> self.usernum:
+            raise ValueError("p/q/k is invalid parameters!")
+
         self.user_sim_mat=None
         self.movie_sim_mat=None
     def fillMissingValue(self,trainset):
@@ -68,9 +71,39 @@ class HybridFillingCF:
                         self.filledset[user][str(i)]= up/(float(down))# user's rating for item i
         # print(filledset['1'])
 
+        #在此基础上计算，填充到self.filledset中
+        filledset=deepcopy(self.filledset)
+
         # fill by user
+        for user,movies in filledset.items():
+            # find the neighbors' rating of this user for the q items which have the max evaluation counts.
+            user_similarity = sorted(self.user_sim_mat[user].items(), key=operator.itemgetter(1), reverse=True)
+            len_sim_user = len(user_similarity)  # The len of most similar user
+            # the len of user_similarity is between 0 -- self.usernum-1
+            if len_sim_user > self.K:
+                user_similarity = user_similarity[:self.K]
 
+            # get the q items
+            item_graded_counts=defaultdict(int)
+            for neighbor_user,sim in user_similarity:
+                for neighbor_user_movie in filledset[neighbor_user]:
+                    item_graded_counts[neighbor_user_movie]+=1
+            q_items=[i for i,_ in sorted(item_graded_counts.items(),key=operator.itemgetter(1),reverse=True)]
+            if len(q_items)>self.Q:
+                q_items=q_items[:self.Q]
+            #！这个长度也可能小于Q
 
+            # only fill the rating of the q items for the user
+            for item in q_items:
+                up = 0
+                down = 0
+                for neighbor_user, sim in user_similarity:
+                    # 如果相似物品没有频分，就不参与计算
+                    if item in filledset[neighbor_user]:
+                        down+=sim
+                        up+=(sim*filledset[neighbor_user][item])
+                if down!=0:# do not fill if the first p neighboring items of the item are not rated
+                    self.filledset[user][item]=up/(1.0* down)
 
     def fit(self, trainset):
         """
@@ -89,6 +122,7 @@ class HybridFillingCF:
             print('No model saved before.\nTrain a new model...')
             self.movie_sim_mat, self.movie_popular, self.movie_count = \
                 similarity.calculate_item_cosine_similarity(trainset=trainset)
+            self.user_sim_mat,_,_=similarity.calculate_user_cosine_similarity(trainset)
             self.filledset=self.fillMissingValue(trainset)
             self.trainset = trainset
             print('Train a new model success.')
