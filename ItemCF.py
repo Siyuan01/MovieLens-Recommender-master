@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-@file: ItemCF.py
-
 Description : Item-based Collaborative filtering.
 """
 import collections
@@ -23,7 +20,6 @@ class ItemBasedCF:
     Item-based Collaborative filtering.
     Top-N recommendation.
     """
-
     def __init__(self, k_sim_movie=20, n_rec_movie=10, use_iuf_similarity=False, save_model=True):
         """
         Init UserBasedCF with n_sim_user and n_rec_movie.
@@ -35,6 +31,9 @@ class ItemBasedCF:
         self.trainset = None
         self.save_model = save_model
         self.use_iuf_similarity = use_iuf_similarity
+        self.filledset = defaultdict(dict)
+        self.result = {}
+        self.user_mean = None
 
     def fit(self, trainset):
         """
@@ -52,9 +51,11 @@ class ItemBasedCF:
             print('Movie similarity model has saved before.\nLoad model success...\n')
         except OSError:
             print('No model saved before.\nTrain a new model...')
+            # self.movie_sim_mat, self.movie_popular, self.movie_count = \
+            #     similarity.calculate_item_cosine_similarity(trainset=trainset,
+            #                                          use_iuf_similarity=self.use_iuf_similarity)
             self.movie_sim_mat, self.movie_popular, self.movie_count = \
-                similarity.calculate_item_similarity(trainset=trainset,
-                                                     use_iuf_similarity=self.use_iuf_similarity)
+                similarity.calculate_item_cosine_similarity(trainset=trainset,)
             self.trainset = trainset
             print('Train a new model success.')
             if self.save_model:
@@ -64,7 +65,19 @@ class ItemBasedCF:
                 model_manager.save_model(self.movie_count, 'movie_count')
                 #model_manager.save_model(self.trainset, 'trainset')
                 print('The new model has saved success.\n')
-
+    def get_usermean(self,trainset=None):
+        '''
+        Get the mean value of each user
+        :param self.trainset: The rating matrix.
+        :return: the mean value of each user
+        '''
+        if self.user_mean:
+            return
+        if not trainset:
+            trainset=self.trainset
+        self.user_mean={}
+        for user,movies in trainset.items():
+            self.user_mean[user]=sum(movies.values())/len(movies)
     def recommend(self, user):
         """
         Find K similar movies and recommend N movies for the user.
@@ -74,9 +87,12 @@ class ItemBasedCF:
         if not self.movie_sim_mat or not self.n_rec_movie or \
                 not self.trainset or not self.movie_popular or not self.movie_count:
             raise NotImplementedError('ItemCF has not init or fit method has not called yet.')
+        if not self.user_mean:
+            self.get_usermean()
         K = self.k_sim_movie
         N = self.n_rec_movie
         predict_score = collections.defaultdict(int)
+        sim_sum=collections.defaultdict(float)
         if user not in self.trainset:
             print('The user (%s) not in trainset.' % user)
             return
@@ -90,9 +106,11 @@ class ItemBasedCF:
                 # predict the user's "interest" for each movie
                 # the predict_score is sum(similarity_factor * rating)
                 predict_score[related_movie] += similarity_factor * rating
-                # log steps and times.
+                sim_sum[related_movie]+= similarity_factor
         # print('Recommend movies to user success.')
-        # return the N best score movies
+        for movie in predict_score.keys():
+            predict_score[movie]=predict_score[movie]/sim_sum[movie]
+            self.filledset[user][movie]=predict_score[movie]
         return [movie for movie, _ in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]]
 
     def test(self, testset):
@@ -103,6 +121,8 @@ class ItemBasedCF:
         """
         if not self.n_rec_movie or not self.trainset or not self.movie_popular or not self.movie_count:
             raise ValueError('ItemCF has not init or fit method has not called yet.')
+        if not self.user_mean:
+            self.get_usermean(self.filledset)
         self.testset = testset
         print('Test recommendation system start...')
         N = self.n_rec_movie
@@ -135,11 +155,40 @@ class ItemBasedCF:
         coverage = len(all_rec_movies) / (1.0 * self.movie_count)
         popularity = popular_sum / (1.0 * rec_count)
 
+        sum_R = 0
+        sum_M = 0
+        testsize = 0
+        for user, movies in self.testset.items():
+            for movie, rating in movies.items():
+                if movie in self.filledset[user]:
+                    pui = self.filledset[user][movie]
+                else:
+                    pui=self.user_mean[user]# 有一部分电影没有被评价过，用平均值填充（总是会使误差变大）
+                sum_R += ((rating - pui) ** 2)
+                sum_M += math.fabs(rating - pui)
+                testsize += 1
+            test_time.count_time()
+
+        RMSE = math.sqrt(sum_R / float(testsize))
+        MAE = sum_M / float(testsize)
+
         print('Test recommendation system success.')
         test_time.finish()
 
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f\tpopularity=%.4f\n' %
               (precision, recall, coverage, popularity))
+        print('RMSE=%.4f\tMAE=%.4f\n' % (RMSE, MAE))
+        print(testsize)
+        self.result['RMSE'] = RMSE
+        self.result['MAE'] = MAE
+        self.result['precision'] = precision
+        self.result['recall'] = recall
+        self.result['coverage'] = coverage
+        self.result['popularity'] = popularity
+
+        # num = sum([len(movies) for user, movies in self.filledset.items()])
+        # print("now the number of the records is %d, the data sparsity level is %.2f\n" % (
+        #     num, 1 - (num / (1.0 * 943 * 1682))))
 
     def predict(self, testset):
         """

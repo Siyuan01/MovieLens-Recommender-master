@@ -10,3 +10,7 @@ main建立MVCF模型的时候传入名称以便获得用户物品数量来建立
 
 RMSE、MAE怎么算？
 把预测分在recommend中写入self.record，再在test中用真实值计算
+
+
+6 调试、测试HfCF，观察指标是否合理
+7 调试、测试MVCF和ModeCF

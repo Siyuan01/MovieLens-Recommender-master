@@ -35,7 +35,7 @@ BUILTIN_DATASETS = {
 
 # modify the random seed will change dataset spilt.
 # if you want to use the model saved before, please don't modify this seed.
-random.seed(0)
+random.seed(1)
 
 
 class DataSet:
@@ -99,7 +99,7 @@ class DataSet:
         return user, movie, rate
 
     @classmethod
-    def train_test_split(cls, ratings, test_size=0.2,fraction=1):
+    def train_test_split(cls, ratings, test_size=0.2,random_seed=1):
         #总共分为1/test_size份，取第fraction份作为testset
         """
         Split rating data to training set and test set.
@@ -112,12 +112,14 @@ class DataSet:
         :param test_size: the percentage of test size.
         :return: train_set and test_set
         """
+        # random.seed(random_seed)
         #collections类中的defaultdict()方法来为字典提供默认值。避免当Key不存在时，会引发‘KeyError’异常
         train, test = collections.defaultdict(dict), collections.defaultdict(dict)
         trainset_len = 0
         testset_len = 0
-        fraction=1/test_size#暂时默认用最后一份
+        # fraction=1/test_size#暂时默认用最后一份
         n=1
+        fold=int((1/test_size))
         for user, movie, rate in ratings:
             # if random.random() <= test_size:
             #     test[user][movie] = int(rate)
@@ -125,14 +127,13 @@ class DataSet:
             # else:
             #     train[user][movie] = int(rate)
             #     trainset_len += 1
-            if n!= fraction:
+            if n!= (random_seed%fold):
                 train[user][movie] = int(rate)
                 trainset_len += 1
-                n += 1
             else:
                 test[user][movie] = int(rate)
                 testset_len += 1
-                n = 1
+            n = (n+1)%fold
         print('split rating data to training set and test set success.')
         print('train set size = %s' % trainset_len)
         print('test set size = %s\n' % testset_len)

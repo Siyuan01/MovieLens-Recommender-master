@@ -9,6 +9,23 @@ import pickle
 import os
 import shutil
 
+import pandas
+def write_to_excel(name,trainset):
+    data=[]
+    for user,movies in trainset.items():
+        arow=[]
+        for movie,rating in movies.items():
+            arow.append(rating)
+        data.append(arow)
+    df=pandas.DataFrame(data)
+    df.to_excel(name+".xlsx")
+
+def normlize_sim(sim_mat):
+    for movie,sim_movies in sim_mat.items():
+        maxsim=max(sim_movies.values())
+        for sim_m,sim in sim_movies.items():
+            sim_mat[movie][sim_m]=sim/maxsim
+
 
 class LogTime:
     """

@@ -7,10 +7,10 @@ import collections
 
 import math
 
-
 from collections import defaultdict
 
 from utils import LogTime
+
 
 # from sklearn.metrics.pairwise import cosine_similarity
 def calculate_user_cosine_similarity(trainset):
@@ -50,14 +50,13 @@ def calculate_user_cosine_similarity(trainset):
         for user1 in users:
             # set default similarity between user1 and other users equals zero
             usersim_mat.setdefault(user1, defaultdict(int))
+            score1=trainset[user1][movie]
             for user2 in users:
                 if user1 == user2:
                     continue
-                # ignore the score they voted.
                 # user similarity matrix only focus on co-occurrence.
-                # origin method, users'similarity based on common items count.
-                usersim_mat[user1][user2] += (trainset[user1][movie]*trainset[user2][movie])
-            user_down_sum_square[user1]+=(trainset[user1][movie] * trainset[user1][movie])
+                usersim_mat[user1][user2] += (score1 * trainset[user2][movie])
+            user_down_sum_square[user1] += (score1 * score1)
         # log steps and times.
         movie2users_time.count_time()
     print('generate user co-rated movies similarity matrix success.')
@@ -68,17 +67,16 @@ def calculate_user_cosine_similarity(trainset):
     # record the calculate time has spent.
     usersim_mat_time = LogTime(print_step=1000)
     for user1, related_users in usersim_mat.items():
-        # len_user1 = len(trainset[user1])
         for user2, sum_up in related_users.items():
-            # len_user2 = len(trainset[user2])
-            # The similarity of user1 and user2 is len(common movies)/sqrt(len(user1 movies)* len(user2 movies)
-            usersim_mat[user1][user2] = sum_up / ( math.sqrt(user_down_sum_square[user1]) *math.sqrt(user_down_sum_square[user2]))
+            usersim_mat[user1][user2] = sum_up / (
+                        math.sqrt(user_down_sum_square[user1]) * math.sqrt(user_down_sum_square[user2]))
             # log steps and times.
         usersim_mat_time.count_time()
 
     print('calculate user-user similarity matrix success.')
     usersim_mat_time.finish()
     return usersim_mat, movie_popular, movie_count
+
 
 def calculate_item_cosine_similarity(trainset):
     """
@@ -89,14 +87,14 @@ def calculate_item_cosine_similarity(trainset):
     :return: similarity matrix
     """
     movie_popular, movie_count = calculate_movie_popular(trainset)
-
+    # print(len(trainset['7']))
     # count co-rated items between users
     print('generate items similarity matrix...')
     # the keys of item_sim_mat are movie1's id,
     # the values of item_sim_mat are dicts which save {movie2's id: the product of two movie ratings}.
     # so you can seem item_sim_mat as a two-dim table.
     movie_sim_mat = {}
-    item_down_sum_square=defaultdict(int)
+    item_down_sum_square = defaultdict(int)
     # record the calculate time has spent.
     movie2users_time = LogTime(print_step=1000)
     for user, movies in trainset.items():
@@ -112,9 +110,10 @@ def calculate_item_cosine_similarity(trainset):
                 movie_sim_mat[movie1][movie2] += (movies[movie1] * movies[movie2])
                 # 目前存储的是分子（分数积之和）
 
-            item_down_sum_square[movie1]+=(movies[movie1]*movies[movie1])
+            item_down_sum_square[movie1] += (movies[movie1] * movies[movie1])
         # log steps and times.
         movie2users_time.count_time()
+    # print(movie_sim_mat['196'])
     print('generate items co-rated similarity matrix success.')
     movie2users_time.finish()
 
@@ -123,18 +122,17 @@ def calculate_item_cosine_similarity(trainset):
     # record the calculate time has spent.
     movie_sim_mat_time = LogTime(print_step=1000)
     for movie1, related_items in movie_sim_mat.items():
-        len_movie1 = movie_popular[movie1]
+        # len_movie1 = movie_popular[movie1]
         for movie2, sum_up in related_items.items():
-            # len_user2 = movie_popular[movie2]
             # The similarity of user1 and user2 is sum_up/(sqrt(sum(score1*score1))* sqrt(sum(score1*score1)))
-            movie_sim_mat[movie1][movie2] = sum_up /( math.sqrt(item_down_sum_square[movie1]) *math.sqrt(item_down_sum_square[movie2]))
+            movie_sim_mat[movie1][movie2] = sum_up / (
+                        math.sqrt(item_down_sum_square[movie1]) * math.sqrt(item_down_sum_square[movie2]))
             # log steps and times.
         movie_sim_mat_time.count_time()
 
     print('calculate item-item similarity matrix success.')
     movie_sim_mat_time.finish()
     return movie_sim_mat, movie_popular, movie_count
-
 
 
 def calculate_user_similarity(trainset, use_iif_similarity=False):

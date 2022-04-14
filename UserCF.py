@@ -31,8 +31,11 @@ class UserBasedCF:
         self.k_sim_user = k_sim_user
         self.n_rec_movie = n_rec_movie
         self.trainset = None
+        self.filledset=defaultdict(dict)
         self.save_model = save_model
         self.use_iif_similarity = use_iif_similarity
+        self.user_mean=None
+        self.result = {}
 
     def fit(self, trainset):
         """
@@ -44,18 +47,17 @@ class UserBasedCF:
         try:
             self.user_sim_mat = model_manager.load_model(
                 'user_sim_mat-iif' if self.use_iif_similarity else 'user_sim_mat')
-            # self.user_sim_mat, self.movie_popular, self.movie_count = \
-            #     similarity.calculate_user_cosine_similarity(trainset=trainset,
-            #                                          use_iif_similarity=self.use_iif_similarity)
             self.movie_popular = model_manager.load_model('movie_popular')
             self.movie_count = model_manager.load_model('movie_count')
             self.trainset = model_manager.load_model('trainset')
             print('User origin similarity model has saved before.\nLoad model success...\n')
         except OSError:
             print('No model saved before.\nTrain a new model...')
+            # self.user_sim_mat, self.movie_popular, self.movie_count = \
+            #     similarity.calculate_user_similarity(trainset=trainset,
+            #                                          use_iif_similarity=self.use_iif_similarity)
             self.user_sim_mat, self.movie_popular, self.movie_count = \
-                similarity.calculate_user_similarity(trainset=trainset,
-                                                     use_iif_similarity=self.use_iif_similarity)
+                similarity.calculate_user_cosine_similarity(trainset=trainset)
             self.trainset = trainset
             print('Train a new model success.')
             if self.save_model:
@@ -64,6 +66,20 @@ class UserBasedCF:
                 model_manager.save_model(self.movie_popular, 'movie_popular')
                 model_manager.save_model(self.movie_count, 'movie_count')
             print('The new model has saved success.\n')
+
+    def get_usermean(self,trainset=None):
+        '''
+        Get the mean value of each user
+        :param self.trainset: The rating matrix.
+        :return: the mean value of each user
+        '''
+        if self.user_mean:
+            return
+        if not trainset:
+            trainset=self.trainset
+        self.user_mean={}
+        for user,movies in trainset.items():
+            self.user_mean[user]=sum(movies.values())/len(movies)
 
     def recommend(self, user):
         """
@@ -77,23 +93,31 @@ class UserBasedCF:
         K = self.k_sim_user
         N = self.n_rec_movie
         predict_score = collections.defaultdict(int)
+        movie_simsum=collections.defaultdict(float)
         if user not in self.trainset:
             print('The user (%s) not in trainset.' % user)
             return
         # print('Recommend movies to user start...')
         watched_movies = self.trainset[user]
-        for similar_user, similarity_factor in sorted(self.user_sim_mat[user].items(),
-                                                      key=itemgetter(1), reverse=True)[0:K]:
+
+        similar_user_fac=sorted(self.user_sim_mat[user].items(),key=itemgetter(1), reverse=True)[0:K]
+        # sum_sim = 0
+        for similar_user, similarity_factor in similar_user_fac:
             for movie, rating in self.trainset[similar_user].items():
                 if movie in watched_movies:
                     continue
                 # predict the user's "interest" for each movie
                 # the predict_score is sum(similarity_factor * rating)
-                predict_score[movie] += similarity_factor * rating
+                predict_score[movie] += (similarity_factor * (rating))#-self.user_mean[similar_user]))
+                movie_simsum[movie]+=similarity_factor
+
+        for movie in predict_score.keys():
+            predict_score[movie]= (predict_score[movie]/movie_simsum[movie])#+self.user_mean[user]
+            self.filledset[user][movie]=predict_score[movie]
+
                 # log steps and times.
         # print('Recommend movies to user success.')
         # return the N best score movies
-        # print([score for  _, score in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]])
         return [movie for movie, _ in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]]
 
     def test(self, testset):
@@ -106,6 +130,8 @@ class UserBasedCF:
             raise ValueError('UserCF has not init or fit method has not called yet.')
         self.testset = testset
         print('Test recommendation system start...')
+        if not self.user_mean:
+            self.get_usermean(self.filledset)
         N = self.n_rec_movie
         #  varables for precision and recall
         hit = 0
@@ -136,11 +162,38 @@ class UserBasedCF:
         coverage = len(all_rec_movies) / (1.0 * self.movie_count)
         popularity = popular_sum / (1.0 * rec_count)
 
+        sum_R = 0
+        sum_M = 0
+        testsize = 0
+        for user, movies in self.testset.items():
+            for movie, rating in movies.items():
+                if movie in self.filledset[user]:
+                    pui = self.filledset[user][movie]
+                else:
+                    pui=self.user_mean[user]# 有一部分电影没有被评价过，用平均值填充（总是会使误差变大）
+                sum_R += ((rating - pui) **2)
+                sum_M += math.fabs(rating - pui)
+                # print(pui,rating)
+                testsize += 1
+            test_time.count_time()
+
+        RMSE = math.sqrt(sum_R / float(testsize))
+        MAE = sum_M / float(testsize)
+
         print('Test recommendation system success.')
         test_time.finish()
 
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f\tpopularity=%.4f\n' %
               (precision, recall, coverage, popularity))
+        # print(self.filledset)
+        print('RMSE=%.4f\tMAE=%.4f\n' % (RMSE, MAE))
+        print(testsize)
+        self.result['RMSE'] = RMSE
+        self.result['MAE'] = MAE
+        self.result['precision'] = precision
+        self.result['recall'] = recall
+        self.result['coverage'] = coverage
+        self.result['popularity'] = popularity
 
     def predict(self, testset):
         """
