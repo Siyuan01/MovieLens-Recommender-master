@@ -1,8 +1,5 @@
-# -*- coding = utf-8 -*-
 """
 User-based Collaborative filtering.
-
-
 """
 import collections
 from operator import itemgetter
@@ -19,9 +16,7 @@ from utils import LogTime
 class UserBasedCF:
     """
     User-based Collaborative filtering.
-    Top-N recommendation.
     """
-
     def __init__(self, k_sim_user=20, n_rec_movie=10, use_iif_similarity=False, save_model=True):
         """
         Init UserBasedCF with n_sim_user and n_rec_movie.
@@ -114,8 +109,6 @@ class UserBasedCF:
         for movie in predict_score.keys():
             predict_score[movie]= (predict_score[movie]/movie_simsum[movie])#+self.user_mean[user]
             self.filledset[user][movie]=predict_score[movie]
-
-                # log steps and times.
         # print('Recommend movies to user success.')
         # return the N best score movies
         return [movie for movie, _ in sorted(predict_score.items(), key=itemgetter(1), reverse=True)[0:N]]
@@ -170,7 +163,7 @@ class UserBasedCF:
                 if movie in self.filledset[user]:
                     pui = self.filledset[user][movie]
                 else:
-                    pui=self.user_mean[user]# 有一部分电影没有被评价过，用平均值填充（总是会使误差变大）
+                    pui=self.user_mean[user]
                 sum_R += ((rating - pui) **2)
                 sum_M += math.fabs(rating - pui)
                 # print(pui,rating)
@@ -185,9 +178,7 @@ class UserBasedCF:
 
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f\tpopularity=%.4f\n' %
               (precision, recall, coverage, popularity))
-        # print(self.filledset)
         print('RMSE=%.4f\tMAE=%.4f\n' % (RMSE, MAE))
-        print(testsize)
         self.result['RMSE'] = RMSE
         self.result['MAE'] = MAE
         self.result['precision'] = precision

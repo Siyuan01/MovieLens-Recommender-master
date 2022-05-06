@@ -1,10 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
-
-@file: most_popular.py
-
-Description : Recommend by Most Popular movies.
+Recommend by Most Popular movies.
 """
 
 import math
@@ -19,7 +14,6 @@ import utils
 class MostPopular:
     """
     Recommend via Random Choice.
-    Top-N recommendation.
     """
 
     def __init__(self, n_rec_movie=10, save_model=True):

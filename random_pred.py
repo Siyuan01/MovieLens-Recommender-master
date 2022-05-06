@@ -1,10 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
-
-@file: random_pred.py
-
-Description : Recommend via Random Choice.
+Recommend via Random Choice.
 """
 import random
 
@@ -19,7 +14,6 @@ import utils
 class RandomPredict:
     """
     Recommend via Random Choice.
-    Top-N recommendation.
     """
 
     def __init__(self, n_rec_movie=10, save_model=True):
@@ -73,7 +67,7 @@ class RandomPredict:
             movie = random.choice(self.total_movies)
             if movie not in watched_movies:
                 predict_movies.append(movie)
-        return predict_movies[:N]#此处可能会有重复
+        return predict_movies[:N]  # 此处可能会有重复
 
     def test(self, testset):
         """
@@ -113,7 +107,7 @@ class RandomPredict:
         precision = hit / (1.0 * rec_count)
         recall = hit / (1.0 * test_count)
         coverage = len(all_rec_movies) / (1.0 * self.movie_count)
-        popularity = popular_sum / (1.0 * rec_count)#在计算平均流行度时对每个物品的流行度取对数，这是因为物品的流行度分布满足长尾分布，在取对数后，流行度的平均值更加稳定
+        popularity = popular_sum / (1.0 * rec_count)
 
         print('Test recommendation system success.')
         test_time.finish()

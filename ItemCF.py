@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
-Description : Item-based Collaborative filtering.
+Item-based Collaborative filtering.
 """
 import collections
 from operator import itemgetter
@@ -18,11 +16,10 @@ from utils import LogTime
 class ItemBasedCF:
     """
     Item-based Collaborative filtering.
-    Top-N recommendation.
     """
     def __init__(self, k_sim_movie=20, n_rec_movie=10, use_iuf_similarity=False, save_model=True):
         """
-        Init UserBasedCF with n_sim_user and n_rec_movie.
+        Init ItemBasedCF with n_sim_user and n_rec_movie.
         :return: None
         """
         print("ItemBasedCF start...\n")
@@ -163,7 +160,7 @@ class ItemBasedCF:
                 if movie in self.filledset[user]:
                     pui = self.filledset[user][movie]
                 else:
-                    pui=self.user_mean[user]# 有一部分电影没有被评价过，用平均值填充（总是会使误差变大）
+                    pui=self.user_mean[user]
                 sum_R += ((rating - pui) ** 2)
                 sum_M += math.fabs(rating - pui)
                 testsize += 1

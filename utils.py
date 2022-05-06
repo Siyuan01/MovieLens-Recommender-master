@@ -1,7 +1,5 @@
-# -*- coding = utf-8 -*-
 """
 Utils in order to simplify coding.
-
 """
 import time
 import pickle
@@ -78,7 +76,7 @@ class LogTime:
 
 class ModelManager:
     """
-    Model manager is designed to load and save all models.
+    load and save all models.
     No matter what dataset name.
     """
     # This dataset_name belongs to the whole class.

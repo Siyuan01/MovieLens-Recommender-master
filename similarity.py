@@ -1,7 +1,5 @@
-# -*- coding = utf-8 -*-
 """
 Calculate  similarity matrix.
-
 """
 import collections
 
@@ -50,7 +48,7 @@ def calculate_user_cosine_similarity(trainset):
         for user1 in users:
             # set default similarity between user1 and other users equals zero
             usersim_mat.setdefault(user1, defaultdict(int))
-            score1=trainset[user1][movie]
+            score1 = trainset[user1][movie]
             for user2 in users:
                 if user1 == user2:
                     continue
@@ -69,7 +67,7 @@ def calculate_user_cosine_similarity(trainset):
     for user1, related_users in usersim_mat.items():
         for user2, sum_up in related_users.items():
             usersim_mat[user1][user2] = sum_up / (
-                        math.sqrt(user_down_sum_square[user1]) * math.sqrt(user_down_sum_square[user2]))
+                    math.sqrt(user_down_sum_square[user1]) * math.sqrt(user_down_sum_square[user2]))
             # log steps and times.
         usersim_mat_time.count_time()
 
@@ -126,7 +124,7 @@ def calculate_item_cosine_similarity(trainset):
         for movie2, sum_up in related_items.items():
             # The similarity of user1 and user2 is sum_up/(sqrt(sum(score1*score1))* sqrt(sum(score1*score1)))
             movie_sim_mat[movie1][movie2] = sum_up / (
-                        math.sqrt(item_down_sum_square[movie1]) * math.sqrt(item_down_sum_square[movie2]))
+                    math.sqrt(item_down_sum_square[movie1]) * math.sqrt(item_down_sum_square[movie2]))
             # log steps and times.
         movie_sim_mat_time.count_time()
 
@@ -136,8 +134,6 @@ def calculate_item_cosine_similarity(trainset):
 
 
 def calculate_user_similarity(trainset, use_iif_similarity=False):
-    # userCF_IIF惩罚了用户u和用户v共同兴趣列表中热门物品对他们相似度的影响
-
     """
     Calculate user similarity matrix by building movie-users inverse table.
     The calculating will only between users which have common items votes.
@@ -212,7 +208,6 @@ def calculate_user_similarity(trainset, use_iif_similarity=False):
 
 
 def calculate_item_similarity(trainset, use_iuf_similarity=False):
-    # IUF：对活跃用户做了一种软性的惩罚
     """
     Calculate item similarity matrix by building movie-users inverse table.
     The calculating will only between items which are voted by common users.

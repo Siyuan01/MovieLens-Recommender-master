@@ -1,10 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
-
-@file: LFM.py
-
-Description : Latent Factor Model
+Latent Factor Model
 """
 import collections
 import random
@@ -42,6 +37,7 @@ class LFM:
         self.save_model = save_model
         self.users_set, self.items_set = set(), set()
         self.items_list = list()
+        self.result={}
         self.P, self.Q = None, None
         self.trainset = None
         self.testset = None
@@ -60,12 +56,12 @@ class LFM:
         self.Q = dict()
         for user in users_set:
             self.P[user] = [random.random()/math.sqrt(K) for _ in range(K)]
+            # self.P[user] = [random.random() for _ in range(K)]
         for item in items_set:
             self.Q[item] = [random.random()/math.sqrt(K) for _ in range(K)]
+            # self.Q[item] = [random.random()/math.sqrt(K) for _ in range(K)]
 
     def init_users_items_set(self, trainset):
-        #数据集应该包含所有的user和他们有过行为的（也就是喜欢）的item。所有的这些item构成了一个item全集
-        #对于每个user来说，我们把他有过行为的item称为正样本，规定兴趣度RUI=1，此外我们还需要从item全集中随机抽样，选取与正样本数量相当的样本作为负样本，规定兴趣度为RUI=0
         """
         Get users set and items set.
         :param trainset: train dataset
@@ -89,19 +85,16 @@ class LFM:
         :param items: Original items, positive sample
         :return: Positive and negative samples
         """
-        #items_pool维护了候选物品的列表，在这个列表中，物品i出现的次数和
-        #物品i的流行度成正比。items是一个dict，它维护了用户已经有过行为的物品的集合
         samples = dict()
         for item, rate in items.items():
-            samples[item] = 1
-        n=0
-        for i in range(len(items) * 11):#（越大约接近）将范围上限设为len(items) * 3，主要是为保证正、负样本数量接近
-            item = self.items_list[random.randint(0, len(self.items_list) - 1)]
-            if item in samples:
-                continue
-            samples[item] = 0
-            if len(samples) >= 10 * len(items):#10？
-                break
+            samples[item] = rate
+        # for i in range(len(items) * 3):
+        #     item = self.items_list[random.randint(0, len(self.items_list) - 1)]
+        #     if item in samples:
+        #         continue
+        #     samples[item] = 0
+        #     if len(samples) >= 2 * len(items):#10？
+        #         break
         # print(samples)
         return samples
 
@@ -112,6 +105,8 @@ class LFM:
         :param item: Given a item to predict the rate
         :return: The predict rate
         """
+        if item not in self.Q:
+            return sum(self.trainset[user].values())/(1.0 * len(self.trainset[user]))
         rate_e = 0
         for k in range(self.K):
             Puk = self.P[user][k]
@@ -135,8 +130,6 @@ class LFM:
                         self.P[user][k] += self.alpha * (eui * self.Q[item][k] - self.lamb * self.P[user][k])
                         self.Q[item][k] += self.alpha * (eui * self.P[user][k] - self.lamb * self.Q[item][k])
             self.alpha *= 0.9
-            # print(list(self.P.items())[1])
-            # print(list(self.Q.items())[1])
 
     def fit(self, trainset):
         """
@@ -214,10 +207,32 @@ class LFM:
         recall = hit / (1.0 * test_count)
         coverage = len(all_rec_movies) / (1.0 * self.items_count)
         popularity = popular_sum / (1.0 * rec_count)
+
+        sum_R = 0
+        sum_M = 0
+        testsize = 0
+        for user, movies in self.testset.items():
+            for movie, rating in movies.items():
+                pui=self.predict(user,movie)
+                sum_R += ((rating - pui) ** 2)
+                sum_M += math.fabs(rating - pui)
+                # print(pui,rating)
+                testsize += 1
+            test_time.count_time()
+
+        RMSE = math.sqrt(sum_R / float(testsize))
+        MAE = sum_M / float(testsize)
+
         print('Test recommendation system success.')
         test_time.finish()
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f\tpopularity=%.4f\n' %
               (precision, recall, coverage, popularity))
 
-        print(len(self.P))
-        print(len(self.Q))
+        print('RMSE=%.4f\tMAE=%.4f\n' % (RMSE, MAE))
+        print(testsize)
+        self.result['RMSE'] = RMSE
+        self.result['MAE'] = MAE
+        self.result['precision'] = precision
+        self.result['recall'] = recall
+        self.result['coverage'] = coverage
+        self.result['popularity'] = popularity

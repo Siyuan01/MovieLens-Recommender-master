@@ -1,8 +1,5 @@
-# -*- coding = utf-8 -*-
 """
-The :mod:`dataset` module defines the :class:`Dataset` class
-and other subclasses which are used for managing datasets.
-
+Used for managing datasets.
 """
 import collections
 import os
@@ -39,28 +36,21 @@ random.seed(1)
 
 
 class DataSet:
-    """Base class for loading datasets.
-
-    Note that you should never instantiate the :class:`Dataset` class directly
+    """
+    Class for loading datasets.
+    Should never instantiate the Dataset class directly
     (same goes for its derived classes), but instead use one of the below
     available methods for loading datasets."""
 
     def __init__(self):
         pass
 
-    #classmethod 修饰符对应的函数不需要实例化，不需要 self 参数，但第一个参数需要是表示自身类的 cls 参数，可以来调用类的属性，类的方法，实例化对象等
-    '''场景：
-    基类有两个继承分支，分支1里有分支2想使用的自定义功能方法，这时就可以将这个方法升级为类方法，所有在继承体系内的成员都可以使用
-    或者是想给类新增功能，但又不想修改构造函数时可以使用。'''
-
-    # 在已写好初始类的情况下，想给初始类再新添功能，不需要改初始类，只要在下一个类内部新写一个方法，方法用 @classmethod装饰一下即可。
-
     @classmethod
     def load_dataset(cls, name='ml-100k'):
         """Load a built-in dataset.
 
         :param name:string: The name of the built-in dataset to load.
-                Accepted values are 'ml-100k', 'ml-1m', and 'jester'.
+                Accepted values are 'ml-100k', 'ml-1m'.
                 Default is 'ml-100k'.
         :return: ratings for each line.
         """
@@ -100,7 +90,6 @@ class DataSet:
 
     @classmethod
     def train_test_split(cls, ratings, test_size=0.2,random_seed=1):
-        #总共分为1/test_size份，取第fraction份作为testset
         """
         Split rating data to training set and test set.
 
@@ -110,14 +99,13 @@ class DataSet:
 
         :param ratings: raw dataset
         :param test_size: the percentage of test size.
+        :param random_seed: the number of a divided test set .
         :return: train_set and test_set
         """
         # random.seed(random_seed)
-        #collections类中的defaultdict()方法来为字典提供默认值。避免当Key不存在时，会引发‘KeyError’异常
         train, test = collections.defaultdict(dict), collections.defaultdict(dict)
         trainset_len = 0
         testset_len = 0
-        # fraction=1/test_size#暂时默认用最后一份
         n=1
         fold=int((1/test_size))
         for user, movie, rate in ratings:
@@ -137,6 +125,4 @@ class DataSet:
         print('split rating data to training set and test set success.')
         print('train set size = %s' % trainset_len)
         print('test set size = %s\n' % testset_len)
-        # print(len(train['1']))
-        # print(len(test['1']))
         return train, test
