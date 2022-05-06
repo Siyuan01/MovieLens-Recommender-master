@@ -1,6 +1,6 @@
 # MovieLens-Recommender
 
-[MovieLens-Recommender][1] is a pure Python implement of ``Collaborative Filtering``. Which contains ``User Based Collaborative Filtering(UserCF)`` and ``Item Based Collaborative Filtering(ItemCF)``. As comparisons, ``Random Based Recommendation`` and ``Most-Popular Based Recommendation`` are also included. The famous ``Latent Factor Model(LFM)`` is added in this Repo,too.
+[MovieLens-Recommender-master][1] is a pure Python implement of ``Collaborative Filtering``. Which contains ``User Based Collaborative Filtering(UserCF)`` and ``Item Based Collaborative Filtering(ItemCF)``. As comparisons, ``Random Based Recommendation`` and ``Most-Popular Based Recommendation`` are also included. The famous ``Latent Factor Model(LFM)`` is added in this Repo,too.
 
 The buildin-datasets are ``Movielens-1M`` and ``Movielens-100k``. But of course, you can use other custom datasets.
 
@@ -10,7 +10,7 @@ Besides, there are two models named ``UserCF-IIF`` and ``ItemCF-IUF``, which hav
 
 The book 《[推荐系统实践](https://book.douban.com/subject/10769749/)》 written by *Xiang Liang* is quite wonderful for those people who don't have much knowledge about Recommendation System. But the book only offers each function's implement of ``Collaborative Filtering``. A good architecture project with datasets-build and model-validation process are required.
 
-So I made [MovieLens-Recommender][1] project, which is a pure Python implement of ``Collaborative Filtering`` based on the ideas of the book.
+So I made [MovieLens-Recommender-master][1] project, which is a pure Python implement of ``Collaborative Filtering`` based on the ideas of the book.
 
 This repository is based on [MovieLens-RecSys][2], which is also a good implement of ``Collaborative Filtering``. But its efficiency is so damn poor!
 
@@ -29,6 +29,8 @@ At the end of a recommendation process, four numbers are given to measure the re
 - Recall
 - Coverage
 - Popularity
+- RMSE
+- MAE
 
 **No python extensions(e.g. Numpy/pandas) are needed!**
 
@@ -49,16 +51,20 @@ git clone https://github.com/Siyuan01/MovieLens-Recommender-master.git
 The configures are in `main.py`. Pleas choose the dataset and model you want to use and set the proper test_size. The default values in `main.py` are shown below:
 
 ```python
+
 dataset_name = 'ml-100k'
 # dataset_name = 'ml-1m'
-# model_type = 'UserCF'
+model_type = 'UserCF'
 # model_type = 'UserCF-IIF'
 # model_type = 'ItemCF'
 # model_type = 'Random'
 # model_type = 'MostPopular'
-model_type = 'ItemCF-IUF'
+# model_type = 'ItemCF-IUF'
 # model_type = 'LFM'
-test_size = 0.1
+# model_type= 'MeanValueCF'
+# model_type = 'ModeValueCF'
+# model_type = 'HfCF'
+test_size = 0.2
 ```
 
 Then run ``python main.py`` in your command line. There will be a recommendation model built on the dataset you choose above.
@@ -184,6 +190,9 @@ These results are nearly same with *Xiang Liang*'s book, which proves that my al
 | Most Popular | 10.54% | 9.90% | 4.07% | 5.9578 |
 
 # Notice
+Now cross validation is used in the main function.
+
+If want to try a separate algorithm test, main.py should to be modified.
 
 UserCF is faser than ItemCF. Using `ml-100k` instead of `ml-1m` will speed up the predict process.
 
@@ -212,6 +221,6 @@ Apache License.
     limitations under the License.
 
 
-  [1]: https://github.com/fuxuemingzhu/MovieLens-Recommender
+  [1]: https://github.com/Siyuan01/MovieLens-Recommender-master
   [2]: https://github.com/Lockvictor/MovieLens-RecSys
   [3]: https://github.com/NicolasHug/Surprise
