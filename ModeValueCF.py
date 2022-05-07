@@ -1,4 +1,3 @@
-# -*- coding = utf-8 -*-
 """
 ModeValue Collaborative filtering.
 fill the array with user's mode rating.

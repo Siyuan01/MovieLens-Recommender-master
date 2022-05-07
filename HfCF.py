@@ -1,4 +1,3 @@
-# -*- coding = utf-8 -*-
 """
 Hybrid filling Collaborative filtering.
 """

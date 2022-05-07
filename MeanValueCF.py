@@ -1,4 +1,3 @@
-# -*- coding = utf-8 -*-
 """
 MeanValue Collaborative filtering.
 fill the array with user's mean rating.
